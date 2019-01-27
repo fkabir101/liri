@@ -1,7 +1,8 @@
 require("dotenv").config();
 const keys = require("./keys.js");
-let axios = require("axios");
-var Spotify = require('node-spotify-api');
+const axios = require("axios");
+const moment = require("moment");
+const Spotify = require('node-spotify-api');
 const spotify = new Spotify(keys.spotify);
 
 let inputString = process.argv;
@@ -13,6 +14,9 @@ for(let i = 3; i<inputString.length; i++){
     if(command === "movie-this"){
       search = search + "+" + inputString[i];
     }
+    else if(command === "band-this"){
+      search = search + "%20" + inputString[i];
+    }
     else{
       search = search + " " + inputString[i];
     }
@@ -20,10 +24,11 @@ for(let i = 3; i<inputString.length; i++){
   else {
     search += inputString[i];
   }
+
 }
 let queryUrl = "";
 if(command === "movie-this"){
-  queryUrl = "http://www.omdbapi.com/?t=" + search + "&y=&plot=short&apikey=trilogy";
+  queryUrl = `http://www.omdbapi.com/?t=${search}&y=&plot=short&apikey=trilogy`;
   axios.get(queryUrl).then(
     function(response) {
       const data = response.data;
@@ -38,7 +43,22 @@ if(command === "movie-this"){
       console.log(`Cast: ${data.Actors}`);
       console.log("===================================");
     }
-  )
+  );
+}
+else if(command === "concert-this"){
+  queryUrl = `https://rest.bandsintown.com/artists/${search}/events?app_id=codingbootcamp`;
+  axios.get(queryUrl).then(
+    function(response) {
+      const data = response.data[0];
+      const time = data.datetime.replace("T", " ");
+      const convertedTime = moment(time, "YYYY-MM-DD HH:mm:ss").format("MMM Do, YYYY hh:mmA");
+      console.log("===================================");
+      console.log(`Venue Name: ${data.venue.name}`);
+      console.log(`Venue Location: ${data.venue.city}, ${data.venue.region}`);
+      console.log(`Date: ${convertedTime}`);
+      console.log("===================================");
+    }
+  );
 }
 
 else if(command === "spotify-this-song"){
@@ -54,7 +74,6 @@ else if(command === "spotify-this-song"){
     else
       artists = spotifyData.artists[i].name;
   }
-  //console.log(spotifyData.album);
   console.log("============================");
   console.log(`Artist: ${artists}`);
   console.log(`Song Name: ${spotifyData.name}`);
